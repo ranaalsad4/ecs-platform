@@ -171,13 +171,14 @@ elif module == "Simulation Tool":
     with st.sidebar.expander("Simulation Sections", expanded=True):
         simulation_section = st.radio(
             "Simulation Sections",
-            [
-                "Firm Compliance Strategy",
-                "Allowance Trading Market",
-                "Carbon Price Pathways",
-                "Sector Decarbonization Pathways",
-                "Allowance Market Balance",
-            ],
+              [
+        "Firm Compliance Strategy",
+        "Allowance Trading Market",
+        "Carbon Price Pathways",
+        "Sector Decarbonization Pathways",
+        "Allowance Market Balance",
+        "Carbon Allowance Trading Des"
+    ],
             key="simulation_section_selector",
             label_visibility="collapsed",
         )
@@ -1063,23 +1064,15 @@ elif module == "Consultation Portal":
 
         st.dataframe(timeline_df, width="stretch")
 
-        st.markdown("**How this fits within the platform**")
-        st.write("Home")
-        st.write("Information Portal")
-        st.write("Consultation Portal")
-        st.write("→ Stakeholder consultation documents")
-        st.write("→ Feedback submissions")
-        st.write("→ Stakeholder engagement schedule")
-        st.write("Simulation Tool")
-        st.write("Capacity Building Hub")
-        st.write("Registry Support Portal")
-        st.write("Stakeholder Dashboard")
 
         st.markdown("**Illustrative Best Practice Note**")
         st.write(
             "Most ETS-style programs include technical working groups, sector consultations, "
             "public consultation periods, and stakeholder forums as part of system development and implementation."
         )
+
+
+
 
 elif module == "Simulation Tool":
     st.header("ECS Carbon Market Training Simulator")
@@ -1123,6 +1116,12 @@ elif module == "Simulation Tool":
         "demand_cement",
         "demand_petrochem",
         "demand_metals",
+        "trading_carbon_price",
+        "trade_buyer",
+        "trade_seller",
+        "trade_quantity",
+        "firms_data",
+        "trade_log",
     ]
 
     if st.button("Reset Simulation"):
@@ -1192,6 +1191,7 @@ elif module == "Simulation Tool":
             "Step 3 — Carbon Price Pathways",
             "Step 4 — Sector Decarbonization Pathways",
             "Step 5 — Allowance Market Balance",
+            "Step 6 — Carbon Allowance Trading Desk",
         ],
         horizontal=True,
         key="learning_step",
@@ -1672,6 +1672,121 @@ elif module == "Simulation Tool":
             st.info("Allowance supply and demand are balanced in this illustrative scenario.")
 
     # -----------------------------
+    # Step 6 — Carbon Allowance Trading Desk
+    # -----------------------------
+    elif learning_step == "Step 6 — Carbon Allowance Trading Desk":
+        st.subheader("Step 6 — Carbon Allowance Trading Desk")
+        st.caption("Illustrative training interface for carbon allowance trading.")
+
+        if "firms_data" not in st.session_state:
+            st.session_state.firms_data = pd.DataFrame({
+                "Firm": ["Cement Co.", "Steel Co.", "Power Co.", "Petrochem Co."],
+                "Sector": ["Cement", "Steel", "Power", "Petrochemicals"],
+                "Emissions": [120, 90, 150, 110],
+                "Allowances": [100, 110, 130, 120]
+            })
+            st.session_state.firms_data["Position"] = (
+                st.session_state.firms_data["Allowances"]
+                - st.session_state.firms_data["Emissions"]
+            )
+
+        if "trade_log" not in st.session_state:
+            st.session_state.trade_log = []
+
+        firms_data = st.session_state.firms_data
+
+        st.markdown("### Firm Positions")
+        st.dataframe(firms_data, width="stretch")
+
+        carbon_price_trade = st.slider(
+            "Current Carbon Price ($/tCO2)",
+            20,
+            150,
+            selected_scenario["carbon_price"],
+            key="trading_carbon_price",
+        )
+
+        buyers = firms_data[firms_data["Position"] < 0]["Firm"].tolist()
+        sellers = firms_data[firms_data["Position"] > 0]["Firm"].tolist()
+
+        st.markdown("### Execute Trade")
+
+        if buyers and sellers:
+            buyer = st.selectbox("Buyer Firm", buyers, key="trade_buyer")
+            seller = st.selectbox("Seller Firm", sellers, key="trade_seller")
+
+            buyer_gap = abs(
+                firms_data.loc[firms_data["Firm"] == buyer, "Position"].values[0]
+            )
+            seller_surplus = firms_data.loc[
+                firms_data["Firm"] == seller, "Position"
+            ].values[0]
+
+            max_trade = int(min(buyer_gap, seller_surplus))
+
+            quantity = st.number_input(
+                "Allowances to Trade",
+                min_value=1,
+                max_value=max_trade if max_trade > 0 else 1,
+                value=1,
+                key="trade_quantity",
+            )
+
+            if st.button("Execute Trade"):
+                buyer_idx = firms_data[firms_data["Firm"] == buyer].index[0]
+                seller_idx = firms_data[firms_data["Firm"] == seller].index[0]
+
+                st.session_state.firms_data.loc[buyer_idx, "Allowances"] += quantity
+                st.session_state.firms_data.loc[seller_idx, "Allowances"] -= quantity
+
+                st.session_state.firms_data["Position"] = (
+                    st.session_state.firms_data["Allowances"]
+                    - st.session_state.firms_data["Emissions"]
+                )
+
+                st.session_state.trade_log.append({
+                    "Buyer": buyer,
+                    "Seller": seller,
+                    "Quantity": quantity,
+                    "Price": carbon_price_trade,
+                    "Value": quantity * carbon_price_trade,
+                })
+
+                st.success(
+                    f"Illustrative trade executed: {buyer} purchased {quantity} allowances from {seller}."
+                )
+                st.rerun()
+        else:
+            st.warning("No valid buyers or sellers available in this scenario.")
+
+        st.markdown("### Transaction Log")
+        if st.session_state.trade_log:
+            trade_log_df = pd.DataFrame(st.session_state.trade_log)
+            st.dataframe(trade_log_df, width="stretch")
+        else:
+            st.info("No trades have been executed yet.")
+
+        st.markdown("### Reset Trading Desk")
+        if st.button("Reset Trading Desk"):
+            st.session_state.firms_data = pd.DataFrame({
+                "Firm": ["Cement Co.", "Steel Co.", "Power Co.", "Petrochem Co."],
+                "Sector": ["Cement", "Steel", "Power", "Petrochemicals"],
+                "Emissions": [120, 90, 150, 110],
+                "Allowances": [100, 110, 130, 120]
+            })
+            st.session_state.firms_data["Position"] = (
+                st.session_state.firms_data["Allowances"]
+                - st.session_state.firms_data["Emissions"]
+            )
+            st.session_state.trade_log = []
+            st.rerun()
+
+        st.info(
+            "This trading desk demonstrates how firms with allowance deficits may purchase allowances "
+            "from firms with surplus allowances. The interface is for stakeholder training purposes only."
+        )
+
+    # -----------------------------
     # Key market takeaways
     # -----------------------------
     st.markdown("---")
@@ -1681,6 +1796,7 @@ elif module == "Simulation Tool":
     st.write("- Clear carbon price pathways support long-term planning and investment decisions.")
     st.write("- Sector pathways help explain how transition pressures can differ across industries.")
     st.write("- Allowance scarcity increases pressure on buyers and can strengthen market price signals.")
+
 
 
 
