@@ -244,7 +244,9 @@ if module == "Home":
     top_col1, top_col2, top_col3 = st.columns(3)
     top_col1.metric("Core Modules", "6")
     top_col2.metric("Training Components", "5+")
-    top_col3.metric("Engagement Functions", "Consultation, Support, Analytics")
+    top_col3.metric("Engagement Tools", "3+")
+
+
 
     st.markdown("---")
     st.subheader("Platform Structure")
