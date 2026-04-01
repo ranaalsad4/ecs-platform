@@ -1074,14 +1074,20 @@ elif module == "Consultation Portal":
 
 
 
+
+
+
+
+
 elif module == "Simulation Tool":
     st.header("ECS Carbon Market Training Simulator")
 
     st.write(
         "This interactive simulator allows stakeholders to explore how an Emissions "
         "Compliance System (ECS) functions. Users can test compliance strategies, observe "
-        "carbon price dynamics, explore emissions reduction pathways, and understand "
-        "allowance market balance in a simplified training environment."
+        "carbon price dynamics, explore emissions reduction pathways, understand allowance "
+        "market balance, and explore how design choices shape market outcomes in a simplified "
+        "training environment."
     )
 
     st.info(
@@ -1094,7 +1100,7 @@ elif module == "Simulation Tool":
     # -----------------------------
     sim_keys_to_clear = [
         "policy_scenario",
-        "learning_step",
+        "learning_step_label",
         "firm_sector",
         "firm_carbon_price",
         "firm_emissions",
@@ -1122,6 +1128,13 @@ elif module == "Simulation Tool":
         "trade_quantity",
         "firms_data",
         "trade_log",
+        "design_cap_type",
+        "design_cap_stringency",
+        "design_allocation_method",
+        "design_price_floor",
+        "design_price_ceiling",
+        "design_banking",
+        "design_offsets",
     ]
 
     if st.button("Reset Simulation"):
@@ -1181,21 +1194,34 @@ elif module == "Simulation Tool":
 
     selected_scenario = scenario_defaults[scenario]
 
+    st.caption(
+        "Note: Policy scenarios are illustrative and primarily intended for administrator "
+        "or facilitator configuration during training sessions."
+    )
+
+    # -----------------------------
+    # Learning journey
+    # -----------------------------
     st.markdown("### Learning Journey")
 
-    learning_step = st.radio(
+    step_options = {
+        "Step 1 — Firm Compliance Strategy": "step_1",
+        "Step 2 — Allowance Trading Market": "step_2",
+        "Step 3 — Carbon Price Pathways": "step_3",
+        "Step 4 — Sector Decarbonization Pathways": "step_4",
+        "Step 5 — Allowance Market Balance": "step_5",
+        "Step 6 — Carbon Allowance Trading Desk": "step_6",
+        "Step 7 — Carbon Market Design Lab": "step_7",
+    }
+
+    selected_step_label = st.radio(
         "Select Step",
-        [
-            "Step 1 — Firm Compliance Strategy",
-            "Step 2 — Allowance Trading Market",
-            "Step 3 — Carbon Price Pathways",
-            "Step 4 — Sector Decarbonization Pathways",
-            "Step 5 — Allowance Market Balance",
-            "Step 6 — Carbon Allowance Trading Desk",
-        ],
+        list(step_options.keys()),
         horizontal=True,
-        key="learning_step",
+        key="learning_step_label",
     )
+
+    learning_step = step_options[selected_step_label]
 
     sector_descriptions = {
         "Power and Utilities": (
@@ -1225,8 +1251,12 @@ elif module == "Simulation Tool":
     # -----------------------------
     # Step 1 — Firm Compliance Strategy
     # -----------------------------
-    if learning_step == "Step 1 — Firm Compliance Strategy":
+    if learning_step == "step_1":
         st.subheader("Step 1 — Firm Compliance Strategy")
+        st.caption(
+            "Objective: To understand how firms evaluate compliance options "
+            "by comparing abatement costs with carbon prices and allowance availability."
+        )
 
         col1, col2 = st.columns([1, 1])
 
@@ -1318,7 +1348,9 @@ elif module == "Simulation Tool":
                     "that surplus could create a potential selling opportunity."
                 )
             else:
-                st.success("This firm is exactly balanced and would not need to buy or sell allowances.")
+                st.success(
+                    "This firm is exactly balanced and would not need to buy or sell allowances."
+                )
         else:
             if abatement_cost < carbon_price:
                 st.info(
@@ -1348,8 +1380,12 @@ elif module == "Simulation Tool":
     # -----------------------------
     # Step 2 — Allowance Trading Market
     # -----------------------------
-    elif learning_step == "Step 2 — Allowance Trading Market":
+    elif learning_step == "step_2":
         st.subheader("Step 2 — Allowance Trading Market")
+        st.caption(
+            "Objective: Illustrate how allowance markets function by showing how firms "
+            "with allowance surpluses become sellers and firms with shortfalls become buyers."
+        )
 
         carbon_price_market = st.slider(
             "Illustrative Market Carbon Price ($/tCO2)",
@@ -1428,8 +1464,12 @@ elif module == "Simulation Tool":
     # -----------------------------
     # Step 3 — Carbon Price Pathways
     # -----------------------------
-    elif learning_step == "Step 3 — Carbon Price Pathways":
+    elif learning_step == "step_3":
         st.subheader("Step 3 — Carbon Price Pathways")
+        st.caption(
+            "Objective: Demonstrate how different carbon price trajectories can influence "
+            "long-term investment decisions and emissions reduction planning."
+        )
 
         col1, col2 = st.columns(2)
 
@@ -1498,8 +1538,12 @@ elif module == "Simulation Tool":
     # -----------------------------
     # Step 4 — Sector Decarbonization Pathways
     # -----------------------------
-    elif learning_step == "Step 4 — Sector Decarbonization Pathways":
+    elif learning_step == "step_4":
         st.subheader("Step 4 — Sector Decarbonization Pathways")
+        st.caption(
+            "Objective: Show how different sectors may follow different emissions "
+            "reduction pathways depending on technology availability and policy signals."
+        )
 
         col1, col2 = st.columns(2)
 
@@ -1547,7 +1591,7 @@ elif module == "Simulation Tool":
             emissions_path = []
             current_emissions = baseline_emissions
 
-            for year in years:
+            for _year in years:
                 emissions_path.append(current_emissions)
                 current_emissions = current_emissions * (1 - annual_reduction_rate / 100)
 
@@ -1585,8 +1629,12 @@ elif module == "Simulation Tool":
     # -----------------------------
     # Step 5 — Allowance Market Balance
     # -----------------------------
-    elif learning_step == "Step 5 — Allowance Market Balance":
+    elif learning_step == "step_5":
         st.subheader("Step 5 — Allowance Market Balance")
+        st.caption(
+            "Objective: To understand how the balance between allowance supply "
+            "and demand influences market scarcity and carbon price pressure."
+        )
 
         col1, col2 = st.columns(2)
 
@@ -1674,16 +1722,20 @@ elif module == "Simulation Tool":
     # -----------------------------
     # Step 6 — Carbon Allowance Trading Desk
     # -----------------------------
-    elif learning_step == "Step 6 — Carbon Allowance Trading Desk":
+    elif learning_step == "step_6":
         st.subheader("Step 6 — Carbon Allowance Trading Desk")
         st.caption("Illustrative training interface for carbon allowance trading.")
+        st.caption(
+            "Objective: Demonstrate how firms manage their carbon allowance positions "
+            "through buying or selling allowances in the market to achieve compliance."
+        )
 
         if "firms_data" not in st.session_state:
             st.session_state.firms_data = pd.DataFrame({
                 "Firm": ["Cement Co.", "Steel Co.", "Power Co.", "Petrochem Co."],
                 "Sector": ["Cement", "Steel", "Power", "Petrochemicals"],
                 "Emissions": [120, 90, 150, 110],
-                "Allowances": [100, 110, 130, 120]
+                "Allowances": [100, 110, 130, 120],
             })
             st.session_state.firms_data["Position"] = (
                 st.session_state.firms_data["Allowances"]
@@ -1772,7 +1824,7 @@ elif module == "Simulation Tool":
                 "Firm": ["Cement Co.", "Steel Co.", "Power Co.", "Petrochem Co."],
                 "Sector": ["Cement", "Steel", "Power", "Petrochemicals"],
                 "Emissions": [120, 90, 150, 110],
-                "Allowances": [100, 110, 130, 120]
+                "Allowances": [100, 110, 130, 120],
             })
             st.session_state.firms_data["Position"] = (
                 st.session_state.firms_data["Allowances"]
@@ -1787,6 +1839,142 @@ elif module == "Simulation Tool":
         )
 
     # -----------------------------
+    # Step 7 — Carbon Market Design Lab
+    # -----------------------------
+    elif learning_step == "step_7":
+        st.subheader("Step 7 — Carbon Market Design Lab")
+        st.caption(
+            "Objective: Allow stakeholders to explore how ETS design choices such as cap type, "
+            "allocation methods, and market stability mechanisms can influence allowance scarcity "
+            "and carbon price signals."
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            cap_type = st.selectbox(
+                "Cap Design",
+                ["Absolute Cap", "Intensity-Based Cap"],
+                key="design_cap_type",
+            )
+
+            cap_stringency = st.slider(
+                "Cap Stringency (% reduction)",
+                5,
+                50,
+                20,
+                key="design_cap_stringency",
+            )
+
+            allocation_method = st.selectbox(
+                "Allocation Method",
+                [
+                    "Auctioning",
+                    "Free Allocation (Benchmarking)",
+                    "Free Allocation (Grandparenting)",
+                    "Hybrid Allocation",
+                ],
+                key="design_allocation_method",
+            )
+
+            price_floor = st.slider(
+                "Price Floor ($/tCO2)",
+                0,
+                100,
+                20,
+                key="design_price_floor",
+            )
+
+            price_ceiling = st.slider(
+                "Price Ceiling ($/tCO2)",
+                50,
+                200,
+                120,
+                key="design_price_ceiling",
+            )
+
+            banking_allowed = st.checkbox(
+                "Banking Allowed",
+                value=True,
+                key="design_banking",
+            )
+
+            offsets_allowed = st.checkbox(
+                "Offsets Allowed",
+                value=False,
+                key="design_offsets",
+            )
+
+        base_supply = 500
+
+        if cap_type == "Absolute Cap":
+            allowance_supply = base_supply * (1 - cap_stringency / 100)
+        else:
+            allowance_supply = (base_supply * 0.95) * (1 - (cap_stringency * 0.8) / 100)
+
+        market_demand = 420
+
+        if allocation_method == "Auctioning":
+            demand_adjustment = 15
+        elif allocation_method == "Hybrid Allocation":
+            demand_adjustment = 5
+        else:
+            demand_adjustment = -10
+
+        if banking_allowed:
+            demand_adjustment += 5
+
+        if offsets_allowed:
+            demand_adjustment -= 20
+
+        adjusted_market_demand = market_demand + demand_adjustment
+        scarcity = adjusted_market_demand - allowance_supply
+        raw_price = 40 + scarcity * 0.12
+        estimated_price = max(price_floor, min(price_ceiling, raw_price))
+
+        with col2:
+            st.metric("Allowance Supply", f"{allowance_supply:,.0f}")
+            st.metric("Adjusted Market Demand", f"{adjusted_market_demand:,.0f}")
+            st.metric("Estimated Carbon Price", f"${estimated_price:,.0f}")
+
+            if scarcity > 0:
+                st.metric("Market Condition", "Scarcity")
+            elif scarcity < 0:
+                st.metric("Market Condition", "Surplus")
+            else:
+                st.metric("Market Condition", "Balanced")
+
+        design_df = pd.DataFrame(
+            {
+                "Category": ["Allowance Supply", "Adjusted Market Demand"],
+                "Value": [allowance_supply, adjusted_market_demand],
+            }
+        )
+
+        fig_design = px.bar(
+            design_df,
+            x="Category",
+            y="Value",
+            title="Market Balance Under Selected Design",
+        )
+        st.plotly_chart(fig_design, width="stretch")
+
+        st.markdown("### Learning Insight")
+        st.info(
+            "Design choices such as cap stringency, allocation methods, and price containment "
+            "mechanisms shape market scarcity, carbon price signals, and compliance costs."
+        )
+
+        st.markdown("### Design Summary")
+        st.write(f"- Cap design: **{cap_type}**")
+        st.write(f"- Cap stringency: **{cap_stringency}%**")
+        st.write(f"- Allocation method: **{allocation_method}**")
+        st.write(f"- Price floor: **${price_floor}/tCO2**")
+        st.write(f"- Price ceiling: **${price_ceiling}/tCO2**")
+        st.write(f"- Banking allowed: **{'Yes' if banking_allowed else 'No'}**")
+        st.write(f"- Offsets allowed: **{'Yes' if offsets_allowed else 'No'}**")
+
+    # -----------------------------
     # Key market takeaways
     # -----------------------------
     st.markdown("---")
@@ -1796,6 +1984,17 @@ elif module == "Simulation Tool":
     st.write("- Clear carbon price pathways support long-term planning and investment decisions.")
     st.write("- Sector pathways help explain how transition pressures can differ across industries.")
     st.write("- Allowance scarcity increases pressure on buyers and can strengthen market price signals.")
+
+
+
+
+
+
+
+
+
+
+
 
 
 
